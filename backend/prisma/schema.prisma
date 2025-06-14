@@ -1,0 +1,230 @@
+// backend/prisma/schema.prisma - Fixed Schema without ID Card uniqueness
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== User Management & Access Control ==========
+model Role {
+  id          Int         @id @default(autoincrement())
+  roleName    String      @unique @map("role_name") @db.VarChar(20)
+  description String?
+
+  users       User[]
+  permissions Permission[] // Permission-based access control
+
+  @@map("roles")
+}
+
+model User {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username        String         @unique @db.VarChar(50)
+  passwordHash    String         @map("password_hash") @db.VarChar(255)
+  name            String         @db.VarChar(100)
+  roleId          Int            @map("role_id")
+  
+  // 🚀 Additional user profile fields
+  email           String?        @unique @db.VarChar(255)
+  phoneNumber     String?        @map("phone_number") @db.VarChar(50)
+  department      String?        @db.VarChar(100)
+  position        String?        @db.VarChar(100)
+  
+  // 🚀 Hospital relationship for USER role
+  hospitalCode    String?        @map("hospital_code") @db.VarChar(10)
+  
+  // 🚀 User activity tracking
+  lastLoginAt     DateTime?      @map("last_login_at")
+
+  role            Role           @relation(fields: [roleId], references: [id])
+  hospital        Hospital?      @relation(fields: [hospitalCode], references: [hospitalCode5Digit])
+
+  // 🚀 Enhanced audit fields
+  createdBy       String?        @map("created_by") @db.VarChar(50)
+  updatedBy       String?        @map("updated_by") @db.VarChar(50)
+  isActive        Boolean        @default(true) @map("is_active")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // 🚀 Indexes for better performance
+  @@index([email])
+  @@index([hospitalCode])
+  @@index([roleId])
+  @@index([isActive])
+  @@index([lastLoginAt])
+  @@map("users")
+}
+
+// 🚀 Permission model for granular access control
+model Permission {
+  id              Int       @id @default(autoincrement())
+  roleId          Int       @map("role_id")
+  permissionCode  String    @map("permission_code") @db.VarChar(100)
+  canAccess       Boolean   @default(true) @map("can_access")
+
+  role            Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionCode])
+  @@map("permissions")
+}
+
+// ========== Hospital Management ==========
+model Hospital {
+  id                      Int             @id @default(autoincrement())
+  hospitalName            String?         @map("hospital_name") @db.VarChar(255)
+  hospitalCode9eDigit     String?         @map("hospital_code_9e_digit") @db.VarChar(9)
+  hospitalCode9Digit      String?         @map("hospital_code_9_digit") @db.VarChar(9)
+  hospitalCode5Digit      String          @unique @map("hospital_code_5_digit") @db.VarChar(10)
+  organizationType        String?         @map("organization_type") @db.VarChar(255)
+  healthServiceType       String?         @map("health_service_type") @db.VarChar(255)
+  affiliation             String?         @db.VarChar(255)
+  departmentDivision      String?         @map("department_division") @db.VarChar(255)
+
+  isActive                Boolean         @default(true) @map("is_active")
+
+  // Relations
+  users                   User[]          // Users assigned to this hospital
+  patientVisits           PatientVisit[]  // Patients treated at this hospital
+  populations             Population[]    // Population data for this hospital
+
+  @@map("hospitalname")
+}
+
+// ========== Disease Management ==========
+model Disease {
+  id           Int             @id @default(autoincrement())
+  imageUrl     String?         @map("img") @db.VarChar(255)
+  engName      String?         @map("eng_name") @db.VarChar(100)
+  thaiName     String          @unique @map("thai_name") @db.VarChar(100)
+  daName       String?         @map("da_name") @db.VarChar(25)
+  details      String?         @db.VarChar(1000)
+
+  createdBy    String?         @map("createdby") @db.VarChar(50)
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedBy    String?         @map("updatedby") @db.VarChar(50)
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  isActive     Boolean         @default(true) @map("is_active")
+
+  // Relations
+  symptoms     Symptom[]
+  patientVisits PatientVisit[]
+
+  @@map("disease_card")
+}
+
+model Symptom {
+  id         Int       @id @default(autoincrement())
+  diseaseId  Int       @map("disease_id")
+  name       String    @db.VarChar(255)
+
+  createdBy  String?   @map("createdby") @db.VarChar(50)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedBy  String?   @map("updatedby") @db.VarChar(50)
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  isActive   Boolean   @default(true) @map("is_active")
+
+  disease    Disease   @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+
+  @@unique([diseaseId, name])
+  @@map("symptoms")
+}
+
+// ========== Patient Visit Management - ✅ UPDATED: Required Fields ==========
+model PatientVisit {
+  id                       Int       @id @default(autoincrement())
+  
+  // ✅ Tab 1: ข้อมูลส่วนตัว - REQUIRED (ยกเว้น HN)
+  idCardCode               String    @map("idcardcod") @db.VarChar(13)           // ✅ Required
+  patientHn                String?   @map("patient_hn") @db.VarChar(20)         // ❌ Optional (ตาม requirement)
+  namePrefix               String    @map("nameprefix") @db.VarChar(10)         // ✅ Required
+  patientName              String    @map("patient_name") @db.VarChar(255)      // ✅ Required
+  gender                   String    @map("p_gender") @db.VarChar(10)           // ✅ Required
+  birthday                 DateTime  @db.Date                                   // ✅ Required
+  ageAtIllness             Int       @map("age_at_illness")                     // ✅ Required
+  nationality              String    @map("p_nationality") @db.VarChar(50)      // ✅ Required
+  maritalStatus            String    @map("maritalstatus") @db.VarChar(50)      // ✅ Required
+  occupation               String    @db.VarChar(255)                           // ✅ Required
+  phoneNumber              String    @map("phonenumber") @db.VarChar(50)        // ✅ Required
+
+  // ✅ Tab 2: ที่อยู่ - REQUIRED
+  // Current Address
+  currentHouseNumber       String    @map("current_house_number") @db.VarChar(50)      // ✅ Required
+  currentVillageNumber     String    @map("current_village_number") @db.VarChar(10)    // ✅ Required
+  currentRoadName          String    @map("current_road_name") @db.VarChar(255)        // ✅ Required
+  currentProvince          String    @map("current_province") @db.VarChar(100)         // ✅ Required
+  currentDistrict          String    @map("current_district") @db.VarChar(100)         // ✅ Required
+  currentSubDistrict       String    @map("current_sub_district") @db.VarChar(100)     // ✅ Required
+
+  // Address where illness occurred
+  addressSickHouseNumber   String    @map("addresssick_house_number") @db.VarChar(50)      // ✅ Required
+  addressSickVillageNumber String    @map("addresssick_village_number") @db.VarChar(10)    // ✅ Required
+  addressSickRoadName      String    @map("addresssick_road_name") @db.VarChar(255)        // ✅ Required
+  addressSickProvince      String    @map("addresssick_province") @db.VarChar(100)         // ✅ Required
+  addressSickDistrict      String    @map("addresssick_district") @db.VarChar(100)         // ✅ Required
+  addressSickSubDistrict   String    @map("addresssick_sub_district") @db.VarChar(100)     // ✅ Required
+
+  // ✅ Tab 3: การเจ็บป่วย - REQUIRED
+  diseaseId                Int       @map("disease_id")                                 // ✅ Required
+  disease                  Disease   @relation(fields: [diseaseId], references: [id]) // ✅ Required
+  symptomsOfDisease        String    @map("symptomsofdisease") @db.Text              // ✅ Required
+  treatmentArea            String    @map("treatment_area") @db.VarChar(100)         // ✅ Required
+  treatmentHospital        String    @map("treatment_hospital") @db.VarChar(255)     // ✅ Required
+  illnessDate              DateTime  @map("illness_date") @db.Date                   // ✅ Required
+  treatmentDate            DateTime  @map("treatment_date") @db.Date                 // ✅ Required
+  diagnosisDate            DateTime  @map("diagnosis_date") @db.Date                 // ✅ Required
+
+  // ✅ Tab 4: ผลตรวจและสถานะ - REQUIRED
+  labResult                String    @map("lab_result") @db.VarChar(100)             // ✅ Required
+  ns1Result                String    @map("ns1_result") @db.VarChar(50)              // ✅ Required
+  patientType              String    @map("patient_type") @db.VarChar(50)            // ✅ Required
+  patientCondition         String    @map("patientcondition") @db.VarChar(50)        // ✅ Required
+  deathDate                DateTime? @map("deathdate") @db.Date                      // ❌ Optional (only if died)
+  causeOfDeath             String?   @map("causeofdeath") @db.Text                   // ❌ Optional (only if died)
+
+  // ✅ Tab 5: หมายเหตุ - REQUIRED
+  receivingProvince        String    @map("receivingprovince") @db.VarChar(100)      // ✅ Required
+  hospitalCode             String    @map("hospital_code") @db.VarChar(50)           // ✅ Required
+  hospital                 Hospital  @relation(fields: [hospitalCode], references: [hospitalCode5Digit]) // ✅ Required
+  remarks                  String    @db.Text      
+
+  // Audit Fields
+  createdBy                String?   @map("createdby") @db.VarChar(50)
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedBy                String?   @map("updatedby") @db.VarChar(50)
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+  isActive                 Boolean   @default(true) @map("is_active")
+
+  // ✅ FIXED: Indexes for performance - Keep ID card index for searches but not unique
+  @@index([idCardCode])          // Allow searches but permit duplicates
+  @@index([hospitalCode])
+  @@index([treatmentHospital])   // Index for treatment hospital queries
+  @@index([illnessDate])
+  @@index([createdAt])
+  @@index([patientName])
+  @@map("patientsvisit")
+}
+
+// ========== Population Data for Incidence Rate Calculation ==========
+model Population {
+  id           Int       @id @default(autoincrement())
+  year         Int       @map("years")
+  population   Int       @map("populations")
+  hospitalCode String    @map("hospital_code") @db.VarChar(10)
+
+  createdBy    String?   @map("createby") @db.VarChar(50)
+  createdAt    DateTime  @default(now()) @map("createat")
+  updatedBy    String?   @map("updateby") @db.VarChar(50)
+  updatedAt    DateTime  @updatedAt @map("updateat")
+  isActive     Boolean   @default(true) @map("is_active")
+
+  hospital     Hospital @relation(fields: [hospitalCode], references: [hospitalCode5Digit])
+
+  @@unique([year, hospitalCode])
+  @@index([year])
+  @@index([hospitalCode])
+  @@map("populations")
+}
