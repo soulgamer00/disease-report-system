@@ -1,4 +1,5 @@
-# docker-compose.yml (Updated with Server IP)
+# docker-compose.yml
+version: '3.8'
 
 services:
   # PostgreSQL Database
@@ -48,7 +49,7 @@ services:
       # Security
       RATE_LIMIT_WINDOW_MS: 900000
       RATE_LIMIT_MAX: 100
-      # CORS (Updated to Server IP)
+      # CORS
       FRONTEND_URL: "http://128.199.99.215:5173"
       # Logging
       LOG_LEVEL: "info"
@@ -80,7 +81,6 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Bangkok
-      # Updated to Server IP
       VITE_API_URL: "http://128.199.99.215:3000"
     ports:
       - "5173:5173"
