@@ -1,4 +1,4 @@
-# docker-compose.yml (Auto-Restart Configuration)
+# docker-compose.yml (Fixed for DigitalOcean Server)
 
 services:
   # PostgreSQL Database
@@ -46,17 +46,17 @@ services:
       # Database
       DATABASE_URL: "postgresql://dxdbadmin:123456@postgres:5432/dxdb?schema=dbdx"
       # JWT Secrets
-      JWT_SECRET: "your-super-secret-jwt-key-change-this-in-production-32-chars-minimum"
-      JWT_REFRESH_SECRET: "your-super-secret-refresh-key-change-this-in-production-32-chars"
+      JWT_SECRET: "f3f6c8e1a0b5d7e9f2a4c6b8d0e2f1a3b5c7d9e1f3a5c7b9d1e3f5a7b9c1d3e5"
+      JWT_REFRESH_SECRET: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
       JWT_EXPIRES_IN: "15m"
       JWT_REFRESH_EXPIRES_IN: "7d"
       # Cookie Secret
-      COOKIE_SECRET: "your-super-secret-cookie-key-change-this-in-production-32-chars"
+      COOKIE_SECRET: "x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4z3y2x1w0v9u8"
       # Security
       RATE_LIMIT_WINDOW_MS: 900000
       RATE_LIMIT_MAX: 100
-      # CORS
-      FRONTEND_URL: "http://localhost:5173"
+      # CORS (Fixed - ใช้ Server IP)
+      FRONTEND_URL: "http://128.199.99.215:5173"
       # Logging
       LOG_LEVEL: "info"
       ENABLE_FILE_LOGGING: "true"
@@ -92,7 +92,7 @@ services:
         npm run dev
       "
 
-  # Frontend Service  
+  # Frontend Service (Fixed)
   frontend:
     build:
       context: ./frontend
@@ -101,7 +101,8 @@ services:
     restart: unless-stopped  # 🔄 Auto-restart เมื่อ crash
     environment:
       TZ: Asia/Bangkok
-      VITE_API_URL: "http://localhost:3000"
+      # Fixed - ใช้ Server IP
+      VITE_API_URL: "http://128.199.99.215:3000"
     ports:
       - "5173:5173"
     volumes:
@@ -123,6 +124,8 @@ services:
         limits:
           memory: 1G         # จำกัด RAM 1GB
           cpus: '0.5'        # จำกัด CPU 50%
+    # Fixed - command ที่ถูกต้อง
+    command: npm run dev -- --host 0.0.0.0 --port 5173
 
   # System Monitor Service
   monitor:
