@@ -1948,6 +1948,7 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import { patientDetail, patientActions } from '$lib/stores/patientStore';
   import { patientApi, type CreatePatientData, type UpdatePatientData, type DiseaseOption, type HospitalOption } from '$lib/api/patients/client';
+  import { OCCUPATION_OPTIONS } from '$lib/constants/occupations';
 
   // ========== EVENT DISPATCHER ==========
   const dispatch = createEventDispatcher<{

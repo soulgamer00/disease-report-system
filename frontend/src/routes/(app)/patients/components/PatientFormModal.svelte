@@ -3,6 +3,7 @@
   import { patientActions, patientStore } from '$lib/stores/patientStore';
   import { patientApi } from '$lib/api/patients/client';
   import type { CreatePatientData, UpdatePatientData, DiseaseOption, HospitalOption, SymptomOption } from '$lib/api/patients/client';
+  import { OCCUPATION_OPTIONS } from '$lib/constants/occupations';
 
   export let mode: 'create' | 'edit' = 'create';
 
@@ -414,17 +415,19 @@
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="occupation">อาชีพ <span class="required">*</span></label>
-                <input
-                  id="occupation"
-                  type="text"
-                  bind:value={formData.occupation}
-                  placeholder="เกษตรกร, ค้าขาย, ..."
-                  required
-                />
-              </div>
+            <div class="form-group">
+  <label for="occupation">อาชีพ <span class="required">*</span></label>
+  <select
+    id="occupation"
+    bind:value={formData.occupation}
+    required
+  >
+    <option value="">เลือกอาชีพ</option>
+    {#each OCCUPATION_OPTIONS as option}
+      <option value={option.value}>{option.label}</option>
+    {/each}
+  </select>
+</div>
               <div class="form-group">
                 <label for="phoneNumber">เบอร์โทรศัพท์ <span class="required">*</span></label>
                 <input
@@ -434,7 +437,6 @@
                   placeholder="081-234-5678"
                   required
                 />
-              </div>
             </div>
           </div>
 

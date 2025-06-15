@@ -16,7 +16,11 @@
     "test": "npm run test:e2e && npm run test:unit -- --run",
     "format": "prettier --write .",
     "test:unit": "vitest",
-    "type-check": "svelte-check --tsconfig ./tsconfig.json"
+    "type-check": "svelte-check --tsconfig ./tsconfig.json",
+    "railway:start": "npm run preview"
+  },
+   "engines": {
+    "node": ">=18.0.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.5",

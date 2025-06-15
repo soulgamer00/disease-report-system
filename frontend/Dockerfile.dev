@@ -1,0 +1,26 @@
+# frontend/Dockerfile.dev  
+# Dockerfile สำหรับ Development
+
+FROM node:18-alpine
+
+# ตั้งค่า Working Directory
+WORKDIR /app
+
+# ตั้งค่า Timezone
+ENV TZ=Asia/Bangkok
+RUN apk add --no-cache tzdata
+
+# Copy package.json และ package-lock.json
+COPY package*.json ./
+
+# ติดตั้ง Dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 5173
+
+# Development command with hot-reload
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -359,13 +359,13 @@
               <!-- Hospital Code 5 Digit (Required) -->
               <div class="form-group span-1">
                 <label for="hospitalCode5Digit">
-                  รหัสโรงพยาบาล (5 หลัก) <span class="required">*</span>
+                  รหัสโรงพยาบาล (9 หลัก) <span class="required">*</span>
                 </label>
                 <div class="input-wrapper">
                   <input
                     id="hospitalCode5Digit"
                     type="text"
-                    maxlength="5"
+                    maxlength="9"
                     placeholder="เช่น A1234"
                     value={formData.hospitalCode5Digit}
                     on:input={(e) => handleFieldChange('hospitalCode5Digit', e.currentTarget.value)}

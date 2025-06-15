@@ -822,6 +822,7 @@
   import { patientActions, patientStore } from '$lib/stores/patientStore';
   import { patientApi } from '$lib/api/patients/client';
   import type { CreatePatientData, UpdatePatientData, DiseaseOption, HospitalOption, SymptomOption } from '$lib/api/patients/client';
+  import { OCCUPATION_OPTIONS } from '$lib/constants/occupations';
 
   export let mode: 'create' | 'edit' = 'create';
 
@@ -1350,20 +1351,23 @@
             </div>
 
             <div class="form-row">
-              <div class="form-group">
-                <label for="occupation">อาชีพ *</label>
-                <input
-                  id="occupation"
-                  type="text"
-                  bind:value={formData.occupation}
-                  placeholder="เกษตรกร, ค้าขาย, ..."
-                  class:error={errors.occupation}
-                  required
-                />
-                {#if errors.occupation}
-                  <span class="error-message">{errors.occupation}</span>
-                {/if}
-              </div>
+             <div class="form-group">
+  <label for="occupation">อาชีพ *</label>
+  <select
+    id="occupation"
+    bind:value={formData.occupation}
+    class:error={errors.occupation}
+    required
+  >
+    <option value="">เลือกอาชีพ</option>
+    {#each OCCUPATION_OPTIONS as option}
+      <option value={option.value}>{option.label}</option>
+    {/each}
+  </select>
+  {#if errors.occupation}
+    <span class="error-message">{errors.occupation}</span>
+  {/if}
+</div>
               <div class="form-group">
                 <label for="phoneNumber">เบอร์โทรศัพท์ *</label>
                 <input
