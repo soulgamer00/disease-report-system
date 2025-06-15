@@ -17,10 +17,7 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
-    "db:seed": "tsx prisma/seed.ts",
-    "render:dev": "npm run dev",
-    "render:start": "npx prisma db push && npm run dev"
-
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
@@ -49,9 +46,6 @@
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
   "keywords": [
     "express",
     "typescript",
@@ -63,5 +57,4 @@
   ],
   "author": "Department of Disease Control, Thailand",
   "license": "MIT"
-  
 }

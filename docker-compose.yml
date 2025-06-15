@@ -1,11 +1,11 @@
-# docker-compose.yml (Fixed for DigitalOcean Server)
+# docker-compose.yml (Updated with Server IP)
 
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: dxdb-postgres
-    restart: unless-stopped  # 🔄 Auto-restart เมื่อ crash
+    restart: unless-stopped
     environment:
       POSTGRES_DB: dxdb
       POSTGRES_USER: dxdbadmin
@@ -15,29 +15,22 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
     networks:
       - app-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dxdbadmin -d dxdb"]
-      interval: 30s          # ตรวจสอบทุก 30 วินาที
-      timeout: 10s           # รอ response 10 วินาที
-      retries: 3             # ลองใหม่ 3 ครั้ง
-      start_period: 60s      # รอ 60 วินาทีก่อนเริ่มตรวจ
-    deploy:
-      resources:
-        limits:
-          memory: 1G         # จำกัด RAM 1GB
-          cpus: '0.5'        # จำกัด CPU 50%
-        reservations:
-          memory: 512M       # จอง RAM ขั้นต่ำ 512MB
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # Backend Service
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: dxdb-backend
-    restart: unless-stopped  # 🔄 Auto-restart เมื่อ crash
+    restart: unless-stopped
     environment:
       NODE_ENV: development
       PORT: 3000
@@ -45,63 +38,49 @@ services:
       TZ: Asia/Bangkok
       # Database
       DATABASE_URL: "postgresql://dxdbadmin:123456@postgres:5432/dxdb?schema=dbdx"
-      # JWT Secrets
+      # JWT Secrets (เปลี่ยนใน production)
       JWT_SECRET: "f3f6c8e1a0b5d7e9f2a4c6b8d0e2f1a3b5c7d9e1f3a5c7b9d1e3f5a7b9c1d3e5"
-      JWT_REFRESH_SECRET: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+      JWT_REFRESH_SECRET: "1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
       JWT_EXPIRES_IN: "15m"
       JWT_REFRESH_EXPIRES_IN: "7d"
       # Cookie Secret
-      COOKIE_SECRET: "x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4z3y2x1w0v9u8"
+      COOKIE_SECRET: "1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1o"
       # Security
       RATE_LIMIT_WINDOW_MS: 900000
       RATE_LIMIT_MAX: 100
-      # CORS (Fixed - ใช้ Server IP)
+      # CORS (Updated to Server IP)
       FRONTEND_URL: "http://128.199.99.215:5173"
       # Logging
       LOG_LEVEL: "info"
-      ENABLE_FILE_LOGGING: "true"
+      ENABLE_FILE_LOGGING: "false"
     ports:
       - "3000:3000"
     volumes:
       - ./backend:/app
       - /app/node_modules
-      - ./logs:/app/logs       # 📝 เก็บ logs
+      - /app/dist
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
-      interval: 30s          # ตรวจสอบทุก 30 วินาที
-      timeout: 10s           # รอ response 10 วินาที
-      retries: 3             # ลองใหม่ 3 ครั้ง
-      start_period: 60s      # รอ 60 วินาทีก่อนเริ่มตรวจ
-    deploy:
-      resources:
-        limits:
-          memory: 2G         # จำกัด RAM 2GB
-          cpus: '1.0'        # จำกัด CPU 100%
-        reservations:
-          memory: 512M       # จอง RAM ขั้นต่ำ 512MB
     command: >
       sh -c "
         echo 'Waiting for database to be ready...' &&
         npx prisma db push &&
-        echo 'Starting backend server...' &&
         npm run dev
       "
 
-  # Frontend Service (Fixed)
+  # Frontend Service  
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: dxdb-frontend
-    restart: unless-stopped  # 🔄 Auto-restart เมื่อ crash
+    restart: unless-stopped
     environment:
       TZ: Asia/Bangkok
-      # Fixed - ใช้ Server IP
+      # Updated to Server IP
       VITE_API_URL: "http://128.199.99.215:3000"
     ports:
       - "5173:5173"
@@ -109,46 +88,10 @@ services:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5173 || exit 1"]
-      interval: 30s          # ตรวจสอบทุก 30 วินาที
-      timeout: 10s           # รอ response 10 วินาที
-      retries: 3             # ลองใหม่ 3 ครั้ง
-      start_period: 60s      # รอ 60 วินาทีก่อนเริ่มตรวจ
-    deploy:
-      resources:
-        limits:
-          memory: 1G         # จำกัด RAM 1GB
-          cpus: '0.5'        # จำกัด CPU 50%
-    # Fixed - command ที่ถูกต้อง
-    command: npm run dev -- --host 0.0.0.0 --port 5173
-
-  # System Monitor Service
-  monitor:
-    image: alpine:latest
-    container_name: dxdb-monitor
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./scripts:/scripts
-      - ./logs:/logs
-    environment:
-      TZ: Asia/Bangkok
-      DISCORD_WEBHOOK: "${DISCORD_WEBHOOK:-}"
-      EMAIL_RECIPIENT: "${EMAIL_RECIPIENT:-}"
-    networks:
-      - app-network
-    command: >
-      sh -c "
-        apk add --no-cache docker-cli curl dcron &&
-        echo '*/5 * * * * /scripts/health_check.sh' > /var/spool/cron/crontabs/root &&
-        echo 'System monitor started. Health checks every 5 minutes.' &&
-        crond -f -d 8
-      "
+    command: npm run dev -- --host 0.0.0.0
 
 volumes:
   postgres_data:

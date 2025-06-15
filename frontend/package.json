@@ -4,9 +4,10 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port $PORT",
+    "dev": "vite dev --host",
     "dev:local": "vite dev",
     "build": "vite build",
+    "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -15,12 +16,7 @@
     "test": "npm run test:e2e && npm run test:unit -- --run",
     "format": "prettier --write .",
     "test:unit": "vitest",
-    "type-check": "svelte-check --tsconfig ./tsconfig.json",
-    "preview": "vite preview --host 0.0.0.0 --port $PORT",
-    "render:start": "npm run preview"
-  },
-   "engines": {
-    "node": ">=18.0.0"
+    "type-check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.5",
