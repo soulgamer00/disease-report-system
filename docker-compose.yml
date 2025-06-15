@@ -87,15 +87,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    nginx:
-      build:
-        context: ./nginx
-        dockerfile: Dockerfile
-      container_name: dxdb-nginx
-      restart: unless-stopped
-      ports:
-      - "80:80" # Map port 80 ของ Host ไปยัง port 80 ของ Nginx container
-      # - "443:443" # หากต้องการใช้ HTTPS
     depends_on:
       - backend
     networks:
