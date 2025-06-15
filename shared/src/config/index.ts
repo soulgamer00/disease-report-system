@@ -11,7 +11,7 @@ import { z } from 'zod';
 // Base configuration schema
 const baseConfigSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).default(3001),
+  PORT: z.string().transform(Number).default(3000),
   
   // Database
   DATABASE_URL: z.string().min(1, 'Database URL is required'),
@@ -33,7 +33,7 @@ const baseConfigSchema = z.object({
 
 // Frontend-specific configuration
 const frontendConfigSchema = z.object({
-  VITE_PUBLIC_API_URL: z.string().default('http://localhost:3001/api'),
+  VITE_PUBLIC_API_URL: z.string().default('http://localhost:3000/api'),
   VITE_APP_VERSION: z.string().default('1.0.0'),
   VITE_APP_NAME: z.string().default('Disease Surveillance System'),
 });

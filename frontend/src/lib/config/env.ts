@@ -10,7 +10,7 @@ interface AppConfig {
 }
 
 export const config: AppConfig = {
-  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://128.199.99.215:3000',
   APP_ENV: (import.meta.env.VITE_APP_ENV as AppConfig['APP_ENV']) || 'development',
   DEBUG: import.meta.env.VITE_DEBUG === 'true' || false,
   APP_NAME: 'ระบบเฝ้าระวังโรคติดต่อโดยแมลง',
